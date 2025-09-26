@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ELIZA iMessage Chat</title>
+  <style>
+    :root {
+      --bg: #e9edf3;
+      --imessage-bg: #f1f2f6;
+      --bubble-user: #0b93f6; /* iMessage blue */
+      --bubble-bot: #e5e5ea; /* iMessage gray */
+      --text-dark: #111;
+      --text-light: #fff;
+      --input-bg: #fff;
+      --border: #d0d7e2;
+    }
+    html, body, #root {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text-dark);
+    }
+    .phone {
+      box-sizing: border-box;
+      width: min(420px, 100%);
+      height: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      background: var(--imessage-bg);
+    }
+    .nav {
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 1px solid var(--border);
+      background: #fff;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 12px 80px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .row {
+      display: flex;
+      width: 100%;
+    }
+    .row.bot { justify-content: flex-start; }
+    .row.user { justify-content: flex-end; }
+
+    .bubble {
+      max-width: 70%;
+      padding: 8px 12px;
+      border-radius: 18px;
+      font-size: 15px;
+      line-height: 1.3;
+      word-wrap: break-word;
+      position: relative;
+      white-space: pre-wrap;
+    }
+    .bot .bubble {
+      background: var(--bubble-bot);
+      color: #000;
+      border-top-left-radius: 6px;
+    }
+    .user .bubble {
+      background: var(--bubble-user);
+      color: var(--text-light);
+      border-top-right-radius: 6px;
+    }
+    .timestamp {
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+      margin: 6px 0 2px;
+    }
+    .typing {
+      display: inline-block;
+      min-width: 36px;
+      background: var(--bubble-bot);
+      color: transparent;
+      position: relative;
+    }
+    .typing::after {
+      content: '…';
+      position: absolute;
+      left: 10px;
+      top: 2px;
+      color: #6b6b6f;
+      letter-spacing: 2px;
+      animation: blink 1.2s infinite ease-in-out;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 0.2; }
+      50% { opacity: 1; }
+    }
+    .inputBar {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 0;
+      width: min(420px, 100%);
+      background: var(--input-bg);
+      border-top: 1px solid var(--border);
+      padding: 8px;
+      display: flex;
+      gap: 8px;
+      box-sizing: border-box;
+    }
+    .inputBar input[type="text"] {
+      flex: 1;
+      padding: 12px 14px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      outline: none;
+      font-size: 15px;
+      background: #f9fafc;
+    }
+    .inputBar button {
+      padding: 10px 14px;
+      border-radius: 18px;
+      border: none;
+      background: var(--bubble-user);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .inputBar button:disabled { opacity: 0.6; cursor: default; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- React + Babel -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- ELIZA engine -->
+  <script src="./jf_eliza_2.js"></script>
+
+  <script type="text/babel">
+    const { useEffect, useRef, useState } = React;
+
+    // UI-side logger to the same BroadcastChannel (if available)
+    function uiLog(type, data) {
+      try {
+        if (!('BroadcastChannel' in window)) return;
+        const ch = window.__elizaLogChannel || (window.__elizaLogChannel = new BroadcastChannel('eliza-logs'));
+        ch.postMessage({ type, data, ts: Date.now(), from: 'index.html' });
+      } catch (_) { /* ignore logging errors */ }
+    }
+
+    function useAutoScroll(dep) {
+      const ref = useRef(null);
+      useEffect(() => {
+        const el = ref.current;
+        if (el) el.scrollTop = el.scrollHeight;
+      }, [dep]);
+      return ref;
+    }
+
+    function App() {
+      const [messages, setMessages] = useState([
+        { id: 1, who: 'bot', text: 'Hello. How are you feeling today?', ts: new Date() }
+      ]);
+      const [input, setInput] = useState('');
+      const [typing, setTyping] = useState(false);
+      const scrollRef = useAutoScroll(messages.length + (typing?1:0));
+
+      const send = () => {
+        const text = input.trim();
+        if (!text) return;
+        const userMsg = { id: Date.now(), who: 'user', text, ts: new Date() };
+        setMessages(prev => [...prev, userMsg]);
+        setInput('');
+
+        // Log UI request
+        uiLog('ui_request_sent', { text });
+
+        setTyping(true);
+        // Simulate typing delay
+        setTimeout(() => {
+          try {
+            const reply = (window.Eliza && window.Eliza.xGenerateReply) ? window.Eliza.xGenerateReply(text) : '...';
+            const botMsg = { id: Date.now() + 1, who: 'bot', text: reply, ts: new Date() };
+            setMessages(prev => [...prev, botMsg]);
+            // Log UI response receipt
+            uiLog('ui_response_received', { text: reply });
+          } finally {
+            setTyping(false);
+          }
+        }, Math.max(350, Math.min(1200, Math.floor(text.length * 30))));
+      };
+
+      const onKey = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          send();
+        }
+      };
+
+      const formatTime = (d) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      return (
+        <div className="phone">
+          <div className="nav">ELIZA</div>
+          <div className="messages" ref={scrollRef}>
+            {messages.map((m, idx) => (
+              <React.Fragment key={m.id}>
+                {(idx === 0 || (messages[idx-1] && messages[idx-1].ts.toDateString() !== m.ts.toDateString())) && (
+                  <div className="timestamp">{m.ts.toDateString()}</div>
+                )}
+                <div className={`row ${m.who}`}>
+                  <div className="bubble">{m.text}</div>
+                </div>
+              </React.Fragment>
+            ))}
+            {typing && (
+              <div className="row bot">
+                <div className="bubble typing">...</div>
+              </div>
+            )}
+          </div>
+          <div className="inputBar">
+            <input
+              type="text"
+              value={input}
+              placeholder="iMessage"
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={onKey}
+              autoFocus
+            />
+            <button onClick={send} disabled={!input.trim()}>Send</button>
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

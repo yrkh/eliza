@@ -1,0 +1,753 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>iMessage Flow Chat</title>
+  <style>
+    :root {
+      --bg: #e9edf3;
+      --imessage-bg: #f1f2f6;
+      --bubble-user: #0b93f6; /* iMessage blue */
+      --bubble-bot: #e5e5ea; /* iMessage gray */
+      --text-dark: #111;
+      --text-light: #fff;
+      --input-bg: #fff;
+      --border: #d0d7e2;
+    }
+    html, body, #root { height: 100%; margin: 0; padding: 0; background: var(--bg); color: var(--text-dark); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    .phone { box-sizing: border-box; width: min(420px, 100%); height: 100%; margin: 0 auto; display: flex; flex-direction: column; background: var(--imessage-bg); }
+    .nav { height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--border); background: #fff; font-weight: 600; position: sticky; top: 0; z-index: 2; padding: 0 10px; }
+    .messages { flex: 1; overflow-y: auto; padding: 12px 12px 80px; display: flex; flex-direction: column; gap: 8px; }
+    .row { display: flex; width: 100%; }
+    .row.bot { justify-content: flex-start; }
+    .row.user { justify-content: flex-end; }
+    .bubble { max-width: 70%; padding: 8px 12px; border-radius: 18px; font-size: 15px; line-height: 1.3; word-wrap: break-word; position: relative; white-space: pre-wrap; }
+    .bot .bubble { background: var(--bubble-bot); color: #000; border-top-left-radius: 6px; }
+    .user .bubble { background: var(--bubble-user); color: var(--text-light); border-top-right-radius: 6px; }
+    .typing { display: inline-block; min-width: 36px; background: var(--bubble-bot); color: transparent; position: relative; }
+    .typing::after { content: '…'; position: absolute; left: 10px; top: 2px; color: #6b6b6f; letter-spacing: 2px; animation: blink 1.2s infinite ease-in-out; }
+    @keyframes blink { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
+    .inputBar { position: fixed; left: 50%; transform: translateX(-50%); bottom: 0; width: min(420px, 100%); background: var(--input-bg); border-top: 1px solid var(--border); padding: 8px; display: flex; gap: 8px; box-sizing: border-box; }
+    .inputBar input[type="text"] { flex: 1; padding: 12px 14px; border-radius: 18px; border: 1px solid var(--border); outline: none; font-size: 15px; background: #f9fafc; }
+    .inputBar button { padding: 10px 14px; border-radius: 18px; border: none; background: var(--bubble-user); color: #fff; font-weight: 600; cursor: pointer; }
+    .inputBar button:disabled { opacity: 0.6; cursor: default; }
+    .ctx { display: flex; gap: 8px; align-items: center; font-weight: 500; }
+    .ctx label { display: flex; align-items: center; gap: 6px; font-weight: 500; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- Embedded JSON to avoid file:// CORS issues; fetch is used as a fallback when served over http(s) -->
+  <script id="flow-json" type="application/json">[
+  {
+    "id": "start",
+    "type": "condition",
+    "if": "phone_exists and is_applicant",
+    "then": "existing_app",
+    "else": "new_app"
+  },
+  {
+    "id": "existing_app",
+    "type": "prompt",
+    "prompt": "Hello {app_name}, {app_info} is your information. Do you want to make any changes?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "confirm_app_name"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "get_app_match"
+      }
+    ]
+  },
+  {
+    "id": "get_app_match"
+  },
+  {
+    "id": "confirm_app_name",
+    "type": "prompt",
+    "prompt": "Q. Hello {app_name}, Is this correct?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "change_app_name"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "change_app_0"
+      }
+    ]
+  },
+  {
+    "id": "change_app_name",
+    "type": "prompt",
+    "prompt": "Q What is your name?",
+    "responses": [
+      {
+          "regex": "new RegExp(\"(?:my name(?:'s| is)?|i(?:'m| am)|call me|you can call me)\\s*[:,-]?\\s*([A-Za-z][A-Za-z'-]*)\", 'i')",
+          "extract": "match[1]",
+          "saveAs": "app_name",
+          "next": "change_app_0"
+        },
+        {
+          "regex": "new RegExp(\"^\\\\s*(?!yes\\\\b|no\\\\b|y\\\\b|n\\\\b|yeah\\\\b|nah\\\\b)([A-Za-z][A-Za-z'-]*(?:\\\\s+[A-Za-z][A-Za-z'-]*){0,3})\\\\s*$\", 'i')",
+          "extract": "match[1]",
+          "saveAs": "app_name",
+          "next": "change_app_0"
+        }
+      ]
+  },
+  {
+    "id": "change_app_0",
+    "type": "prompt",
+    "prompt": "Q: Do you want to make other changes?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "confirm_app_loc"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "get_app_match"
+      }
+    ]
+  },
+  {
+    "id": "confirm_app_loc",
+    "type": "prompt",
+    "prompt": "Q. We have you coming from {app_loc}, Do you want to change it?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "change_app_loc"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "change_app_1"
+      }
+    ]
+  },
+  {
+    "id": "change_app_loc",
+    "type": "prompt",
+    "prompt": "Q Where are you coming from?",
+    "responses": [
+      {
+        "regex": "new RegExp(\"\\b(?:I'm from|I am from|from | I live at |  I live in)\\s+([a-zA-Z]+(?:\\s[a-zA-Z]+)*)\", 'i')",
+        "extract": "match[1]",
+        "saveAs": "app_loc",
+        "next": "change_app_1"
+      }
+    ]
+  },
+  {
+    "id": "change_app_1",
+    "type": "prompt",
+    "prompt": "Q: Do you want to make other changes?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "confirm_app_travel"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "get_app_match"
+      }
+    ]
+  },
+  {
+    "id": "confirm_app_travel",
+    "type": "prompt",
+    "prompt": "Q: Next we that you are willing to travel {app_travel_time}, do you want to change it?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "change_app_travel"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "change_app_2"
+      }
+    ]
+  },
+  {
+    "id": "change_app_travel",
+    "type": "prompt",
+    "prompt": "Q How many miles are you willing to travel",
+    "responses": [
+      {
+        "regex": "new RegExp(\"(\\d+(?:\\.\\d+)?)\\s*(?:-\\s*(\\d+(?:\\.\\d+)?))?\\s*(?:miles?|mi)\\b\", \"i\")",
+        "extract": "match[0]",
+        "saveAs": "app_travel",
+        "next": "change_app_2"
+      }
+    ]
+  },
+  {
+    "id": "change_app_2",
+    "type": "prompt",
+    "prompt": "Q: Do you want to make other changes?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "confirm_app_pay"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "get_app_match"
+      }
+    ]
+  },
+  {
+    "id": "confirm_app_pay",
+    "type": "prompt",
+    "prompt": "Q: You wanted at least {app_pay}, do you want to change it?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "change_app_pay"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "change_app_3"
+      }
+    ]
+  },
+  {
+    "id": "change_app_pay",
+    "type": "prompt",
+    "prompt": "Q: How much do you want to make per week?",
+    "responses": [
+      {
+        "regex": "new RegExp(\"\\$?(\\d{1,3}(?:,?\\d{3})*(?:\\.\\d{2})?)\")",
+        "extract": "match[0]",
+        "saveAs": "app_pay",
+        "next": "change_app_3"
+      }
+    ]
+  },
+  {
+    "id": "change_app_3",
+    "type": "prompt",
+    "prompt": "Q: Do you want to make other changes?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "confirm_app_workday"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "get_app_match"
+      }
+    ]
+  },
+  {
+    "id": "confirm_app_workday",
+    "type": "prompt",
+    "prompt": "Q: We have that you can work {app_workday}, do you want to change it?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "change_app_workday"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "change_app_4"
+      }
+    ]
+  },
+  {
+    "id": "change_app_workday",
+    "type": "prompt",
+    "prompt": "Q: What days of the week are you available?",
+    "responses": [
+      {
+        "regex": "const regex = new RegExp(\"\\b(Mondays?|Tuesdays?|Wednesdays?|Thursdays?|Fridays?|Saturdays?|Sundays?)\\b(?:\\s*(?:to|through|-)\\s*\\b(Mondays?|Tuesdays?|Wednesdays?|Thursdays?|Fridays?|Saturdays?|Sundays?)\\b)?\", \"gi\")",
+        "extract": "match",
+        "saveAs": "app_workday",
+        "next": "change_app_4"
+      }
+    ]
+  },
+  {
+    "id": "change_app_4",
+    "type": "prompt",
+    "prompt": "Q: Do you want to make other changes?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "confirm_app_skills"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "get_app_match"
+      }
+    ]
+  },
+  {
+    "id": "confirm_app_skills",
+    "type": "prompt",
+    "prompt": "Q: We have your experience as the following {app_skills}, do you want to change it?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "change_app_skills"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "change_app_5"
+      }
+    ]
+  },
+  {
+    "id": "change_app_skills",
+    "type": "prompt",
+    "prompt": "Q: What experience do you have?",
+    "responses": [
+      {
+        "regex": "const regex = /(?:(\\d+\\+?\\s*(?:years|months))\\s+of\\s+experience\\s+(?:in|with)\\s+([\\w\\s\\/&-]+))|(?:experience\\s+(?:in|with)\\s+([\\w\\s\\/&-]+))|(?:worked\\s+(?:in|on|with)\\s+([\\w\\s\\/&-]+))|(?:skills?\\s+in\\s+([\\w\\s\\/&-]+))/gi;",
+        "extract": "match",
+        "saveAs": "app_skills",
+        "next": "change_app_5"
+      }
+    ]
+  },
+  {
+    "id": "change_app_5",
+    "type": "prompt",
+    "prompt": "Q: Do you want to make other changes?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "confirm_app_prime_phone"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "get_app_match"
+      }
+    ]
+  },
+  {
+    "id": "confirm_app_prime_phone",
+    "type": "prompt",
+    "prompt": "Q: We have your primary number as {app_prime_phone}, do you want to change it?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "change_app_prime_phone"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "change_app_6"
+      }
+    ]
+  },
+  {
+    "id": "change_app_prime_phone",
+    "type": "prompt",
+    "prompt": "Q: What is your new primary number?",
+    "responses": [
+      {
+        "regex": "new RegExp(['(?:\\+?1\\s*[-.]?)?', '\\(?\\d{3}\\)?', '[\\s.-]?', '\\d{3}',  '[\\s.-]?', '\\d{4}'].join(''), 'g')",
+        "extract": "match",
+        "saveAs": "app_prime_phone",
+        "next": "change_app_6"
+      }
+    ]
+  },
+  {
+    "id": "change_app_6",
+    "type": "prompt",
+    "prompt": "Q: Do you want to make other changes?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "confirm_app_sec_phone"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "get_app_match"
+      }
+    ]
+  },
+  {
+    "id": "confirm_app_sec_phone",
+    "type": "prompt",
+    "prompt": "Q: We have your alternate number as {app_sec_phone}, do you want to change it?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "change_app_sec_phone"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "get_app_match"
+      }
+    ]
+  },
+  {
+    "id": "change_app_sec_phone",
+    "type": "prompt",
+    "prompt": "Q: What is your new alternate number?",
+    "responses": [
+      {
+        "regex": "new RegExp(['(?:\\+?1\\s*[-.]?)?', '\\(?\\d{3}\\)?', '[\\s.-]?', '\\d{3}',  '[\\s.-]?', '\\d{4}'].join(''), 'g')",
+        "extract": "match",
+        "saveAs": "app_sec_phone",
+        "next": "get_app_match"
+      }
+    ]
+  },
+  {
+    "id": "new_app",
+    "type": "prompt",
+    "prompt": "Q What is your name?",
+    "responses": [
+      {
+        "regex": "new RegExp(\"(?:my name(?:'s| is)?|i(?:'m| am)|call me|you can call me)\\s*[:,-]?\\s*([A-Za-z][A-Za-z'-]*)\", 'i')",
+        "extract": "match[1]",
+        "saveAs": "app_name",
+        "next": "new_app_loc"
+      },
+      {
+        "regex": "new RegExp(\"^\\\\s*(?!yes\\\\b|no\\\\b|y\\\\b|n\\\\b|yeah\\\\b|nah\\\\b)([A-Za-z][A-Za-z'-]*(?:\\\\s+[A-Za-z][A-Za-z'-]*){0,3})\\\\s*$\", 'i')",
+        "extract": "match[1]",
+        "saveAs": "app_name",
+        "next": "new_app_loc"
+      }
+    ]
+  },
+  {
+    "id": "new_app_loc",
+    "type": "prompt",
+    "prompt": "Q Where are you coming from?",
+    "responses": [
+      {
+        "regex": "new RegExp(\"\\b(?:I'm from|I am from|from | I live at |  I live in)\\s+([a-zA-Z]+(?:\\s[a-zA-Z]+)*)\", 'i')",
+        "extract": "match[1]",
+        "saveAs": "app_loc",
+        "next": "new_app_travel"
+      }
+    ]
+  },
+  {
+    "id": "new_app_travel",
+    "type": "prompt",
+    "prompt": "Q How many miles are you willing to travel",
+    "responses": [
+      {
+        "regex": "new RegExp(\"(\\d+(?:\\.\\d+)?)\\s*(?:-\\s*(\\d+(?:\\.\\d+)?))?\\s*(?:miles?|mi)\\b\", 'i')",
+        "extract": "match[0]",
+        "saveAs": "app_travel",
+        "next": "new_app_pay"
+      }
+    ]
+  },
+  {
+    "id": "new_app_pay",
+    "type": "prompt",
+    "prompt": "Q: How much do you want to make per week?",
+    "responses": [
+      {
+        "regex": "new RegExp(\"\\$?(\\d{1,3}(?:,?\\d{3})*(?:\\.\\d{2})?)\")",
+        "extract": "match[0]",
+        "saveAs": "app_pay",
+        "next": "new_app_workday"
+      }
+    ]
+  },
+  {
+    "id": "new_app_workday",
+    "type": "prompt",
+    "prompt": "Q: What days of the week are you available?",
+    "responses": [
+      {
+        "regex": "const regex = new RegExp(\"\\b(Mondays?|Tuesdays?|Wednesdays?|Thursdays?|Fridays?|Saturdays?|Sundays?)\\b(?:\\s*(?:to|through|-)\\s*\\b(Mondays?|Tuesdays?|Wednesdays?|Thursdays?|Fridays?|Saturdays?|Sundays?)\\b)?\", \"gi\")",
+        "extract": "match",
+        "saveAs": "app_workday",
+        "next": "new_app_skills"
+      }
+    ]
+  },
+  {
+    "id": "new_app_skills",
+    "type": "prompt",
+    "prompt": "Q: What experience do you have?",
+    "responses": [
+      {
+        "regex": "const regex = /(?:(\\d+\\+?\\s*(?:years|months))\\s+of\\s+experience\\s+(?:in|with)\\s+([\\w\\s\\/&-]+))|(?:experience\\s+(?:in|with)\\s+([\\w\\s\\/&-]+))|(?:worked\\s+(?:in|on|with)\\s+([\\w\\s\\/&-]+))|(?:skills?\\s+in\\s+([\\w\\s\\/&-]+))/gi;",
+        "extract": "match",
+        "saveAs": "app_skills",
+        "next": "confirm_new_app_sec_phone"
+      }
+    ]
+  },
+  {
+    "id": "confirm_new_app_sec_phone",
+    "type": "prompt",
+    "prompt": "Q: Do you want to add another number where we can contact you?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "add_app_sec_phone"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "get_app_match"
+      }
+    ]
+  },
+  {
+    "id": "add_app_sec_phone",
+    "type": "prompt",
+    "prompt": "Q: What is your new alternate number?",
+    "responses": [
+      {
+        "regex": "new RegExp(['(?:\\+?1\\s*[-.]?)?', '\\(?\\d{3}\\)?', '[\\s.-]?', '\\d{3}',  '[\\s.-]?', '\\d{4}'].join(''), 'g')",
+        "extract": "match",
+        "saveAs": "app_sec_phone",
+        "next": "get_app_match"
+      }
+    ]
+  }
+]</script>
+
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useEffect, useRef, useState, useMemo } = React;
+
+    function useAutoScroll(dep) {
+      const ref = useRef(null);
+      useEffect(() => { const el = ref.current; if (el) el.scrollTop = el.scrollHeight; }, [dep]);
+      return ref;
+    }
+
+    // Parse a regex string from the JSON into a RegExp object.
+    function parseRegexString(str) {
+      if (!str || typeof str !== 'string') return null;
+      try {
+        // Case 1: new RegExp('pattern', 'flags')
+        const newRe = str.match(/^\s*new\s+RegExp\((.*)\)\s*;?\s*$/s);
+        if (newRe) {
+          // Split arguments cautiously (pattern, flags) allowing quotes
+          const args = new Function(`return [${newRe[1]}];`)();
+          const [pattern, flags] = args;
+          return new RegExp(pattern, flags || undefined);
+        }
+        // Case 2: a JS regex literal possibly preceded by variable declaration, e.g., "const regex = /.../gi;"
+        const lit = str.match(/\/(.*)\/([gimsuy]*)/s);
+        if (lit) {
+          return new RegExp(lit[1], lit[2] || undefined);
+        }
+      } catch (e) {
+        console.warn('Failed to parse regex from string:', str, e);
+      }
+      return null;
+    }
+
+    function substituteVars(text, ctx) {
+      return text.replace(/\{(.*?)\}/g, (_, k) => {
+        const v = ctx[k.trim()];
+        return v == null ? `{${k}}` : String(v);
+      });
+    }
+
+    function evaluateCondition(expr, ctx) {
+      // allow: and/or/not, variables from ctx that are truthy
+      const safe = expr
+        .replace(/\band\b/gi, '&&')
+        .replace(/\bor\b/gi, '||')
+        .replace(/\bnot\b/gi, '!')
+        .replace(/[^\w_!&|()\s]/g, ''); // strip anything unexpected
+      const vars = Object.create(null);
+      Object.keys(ctx).forEach(k => { vars[k] = !!ctx[k]; });
+      try {
+        // eslint-disable-next-line no-new-func
+        return Function(...Object.keys(vars), `return (${safe});`)(...Object.values(vars));
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function FlowChat() {
+      const [flow, setFlow] = useState(null);
+      const [nodeMap, setNodeMap] = useState({});
+      const [currentId, setCurrentId] = useState(null);
+      const [ctx, setCtx] = useState({ phone_exists: false, is_applicant: false });
+      const [messages, setMessages] = useState([]);
+      const [input, setInput] = useState('');
+      const [typing, setTyping] = useState(false);
+
+      const scrollRef = useAutoScroll(messages.length + (typing?1:0));
+
+      useEffect(() => {
+        // Try embedded JSON first (works with file://)
+        try {
+          const tag = document.getElementById('flow-json');
+          if (tag && tag.textContent) {
+            const data = JSON.parse(tag.textContent);
+            setFlow(data);
+            const map = {};
+            data.forEach(n => { if (n && n.id) map[n.id] = n; });
+            setNodeMap(map);
+            setCurrentId(data[0]?.id || null);
+            return;
+          }
+        } catch (e) {
+          console.warn('Embedded flow-json parse failed, will try fetch()', e);
+        }
+        // Fallback to fetching the JSON (works when served over http/https)
+        fetch('./conversation_flow_complete.json')
+          .then(r => r.json())
+          .then(data => {
+            setFlow(data);
+            const map = {};
+            data.forEach(n => { if (n && n.id) map[n.id] = n; });
+            setNodeMap(map);
+            setCurrentId(data[0]?.id || null);
+          })
+          .catch(err => {
+            console.error('Failed to load flow JSON', err);
+            setMessages(prev => [...prev, { id: 'err', who: 'bot', text: 'Could not load the conversation flow. If you opened this file directly, your browser may block file:// fetches. Either use this embedded version, or serve the folder (see README).', ts: new Date() }]);
+          });
+      }, []);
+
+      useEffect(() => {
+        // whenever currentId changes to a prompt/condition, emit the bot message or route
+        if (!currentId || !nodeMap[currentId]) return;
+        const node = nodeMap[currentId];
+        if (node.type === 'prompt' && node.prompt) {
+          const text = substituteVars(node.prompt, ctx);
+          // add bot message with slight typing delay
+          setTyping(true);
+          const delay = 400 + Math.min(800, text.length * 15);
+          setTimeout(() => {
+            setMessages(prev => [...prev, { id: `${currentId}-${Date.now()}`, who: 'bot', text, ts: new Date() }]);
+            setTyping(false);
+          }, delay);
+        } else if (node.type === 'condition') {
+          const result = evaluateCondition(node.if || '', ctx);
+          const next = result ? node.then : node.else;
+          setCurrentId(next);
+        } else {
+          // nodes without type (e.g., get_app_match) -> finish
+          setTyping(true);
+          setTimeout(() => {
+            const summary = buildSummary(ctx);
+            setMessages(prev => [...prev, { id: `end-${Date.now()}`, who: 'bot', text: summary, ts: new Date() }]);
+            setTyping(false);
+          }, 500);
+        }
+      }, [currentId]);
+
+      function buildSummary(ctx) {
+        const parts = [];
+        if (ctx.app_name) parts.push(`Name: ${ctx.app_name}`);
+        if (ctx.app_loc) parts.push(`Location: ${ctx.app_loc}`);
+        if (ctx.app_travel) parts.push(`Travel: ${ctx.app_travel}`);
+        if (ctx.app_pay) parts.push(`Pay: ${ctx.app_pay}`);
+        if (ctx.app_workday) parts.push(`Workdays: ${Array.isArray(ctx.app_workday)? ctx.app_workday.join(', ') : ctx.app_workday}`);
+        if (ctx.app_skills) parts.push(`Skills: ${Array.isArray(ctx.app_skills)? ctx.app_skills.join(', ') : ctx.app_skills}`);
+        if (ctx.app_prime_phone) parts.push(`Primary Phone: ${Array.isArray(ctx.app_prime_phone)? ctx.app_prime_phone.join(', ') : ctx.app_prime_phone}`);
+        if (ctx.app_sec_phone) parts.push(`Alternate Phone: ${Array.isArray(ctx.app_sec_phone)? ctx.app_sec_phone.join(', ') : ctx.app_sec_phone}`);
+        return parts.length ? `Thanks! Here is what I have:\n\n${parts.join('\n')}` : 'Thanks! We will be in touch with your job matches.';
+      }
+
+      function handleSend() {
+        const text = input.trim();
+        if (!text) return;
+        const userMsg = { id: `u-${Date.now()}`, who: 'user', text, ts: new Date() };
+        setMessages(prev => [...prev, userMsg]);
+        setInput('');
+
+        const node = nodeMap[currentId];
+        if (!node || node.type !== 'prompt' || !Array.isArray(node.responses)) {
+          return; // ignore
+        }
+        // find first matching response
+        let matched = null;
+        let matchValue = null;
+        for (const resp of node.responses) {
+          const re = parseRegexString(resp.regex);
+          if (!re) continue;
+          const m = text.match(re);
+          if (m) {
+            matched = resp;
+            // extract handling
+            if (resp.extract) {
+              if (resp.extract === 'match') {
+                matchValue = m.length > 1 ? m.slice(1) : m;
+              } else if (/^match\[\d+\]$/.test(resp.extract)) {
+                const idx = parseInt(resp.extract.match(/\d+/)[0], 10);
+                matchValue = m[idx];
+              } else {
+                // as a fallback, try eval with 'match' in scope
+                try { matchValue = Function('match', `return (${resp.extract});`)(m); } catch (_) { matchValue = m[0]; }
+              }
+            }
+            break;
+          }
+        }
+        if (!matched) {
+          // bot asks for clarification
+          setTyping(true);
+          setTimeout(() => {
+            setMessages(prev => [...prev, { id: `e-${Date.now()}`, who: 'bot', text: "Sorry, I didn't catch that. Could you try a different wording?", ts: new Date() }]);
+            setTyping(false);
+          }, 400);
+          return;
+        }
+        // saveAs if provided
+        if (matched.saveAs) {
+          setCtx(prev => ({ ...prev, [matched.saveAs]: matchValue ?? text }));
+        }
+        // go to next
+        if (matched.next) setCurrentId(matched.next);
+      }
+
+      const onKeyDown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+      };
+
+      const toggleCtx = (key) => {
+        setCtx(prev => ({ ...prev, [key]: !prev[key] }));
+      };
+
+      const title = useMemo(() => 'iMessage Flow', []);
+
+      return (
+        <div className="phone">
+          <div className="nav">
+            <div>{title}</div>
+            <div className="ctx">
+              <label><input type="checkbox" checked={!!ctx.phone_exists} onChange={() => toggleCtx('phone_exists')} /> phone_exists</label>
+              <label><input type="checkbox" checked={!!ctx.is_applicant} onChange={() => toggleCtx('is_applicant')} /> is_applicant</label>
+            </div>
+          </div>
+          <div className="messages" ref={scrollRef}>
+            {messages.map(m => (
+              <div className={`row ${m.who}`} key={m.id}><div className="bubble">{m.text}</div></div>
+            ))}
+            {typing && (
+              <div className="row bot"><div className="bubble typing">...</div></div>
+            )}
+          </div>
+          <div className="inputBar">
+            <input type="text" value={input} placeholder="iMessage" onChange={e => setInput(e.target.value)} onKeyDown={onKeyDown} />
+            <button onClick={handleSend} disabled={!input.trim()}>Send</button>
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<FlowChat />);
+  </script>
+</body>
+</html>

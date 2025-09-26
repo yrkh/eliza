@@ -1,0 +1,474 @@
+[
+  {
+    "id": "start",
+    "type": "condition",
+    "if": "phone_exists and is_applicant",
+    "then": "existing_app",
+    "else": "new_app"
+  },
+  {
+    "id": "existing_app",
+    "type": "prompt",
+    "prompt": "Hello {app_name}, {app_info} is your information. Do you want to make any changes?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "confirm_app_name"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "get_app_match"
+      }
+    ]
+  },
+  {
+    "id": "get_app_match"
+  },
+  {
+    "id": "confirm_app_name",
+    "type": "prompt",
+    "prompt": "Q. Hello {app_name}, Is this correct?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "change_app_name"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "change_app_0"
+      }
+    ]
+  },
+  {
+    "id": "change_app_name",
+    "type": "prompt",
+    "prompt": "Q What is your name?",
+    "responses": [
+      {
+        "regex": "new RegExp(\"(?:my name(?:'s| is)?|i(?:'m| am)|call me|you can call me)\\s*[:,-]?\\s*([A-Za-z][A-Za-z'-]*)\", 'i')",
+        "extract": "match[1]",
+        "saveAs": "app_name",
+        "next": "change_app_0"
+      },
+      {
+        "regex": "new RegExp(\"^\\\\s*(?!yes\\\\b|no\\\\b|y\\\\b|n\\\\b|yeah\\\\b|nah\\\\b)([A-Za-z][A-Za-z'-]*(?:\\\\s+[A-Za-z][A-Za-z'-]*){0,3})\\\\s*$\", 'i')",
+        "extract": "match[1]",
+        "saveAs": "app_name",
+        "next": "change_app_0"
+      }
+    ]
+  },
+  {
+    "id": "change_app_0",
+    "type": "prompt",
+    "prompt": "Q: Do you want to make other changes?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "confirm_app_loc"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "get_app_match"
+      }
+    ]
+  },
+  {
+    "id": "confirm_app_loc",
+    "type": "prompt",
+    "prompt": "Q. We have you coming from {app_loc}, Do you want to change it?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "change_app_loc"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "change_app_1"
+      }
+    ]
+  },
+  {
+    "id": "change_app_loc",
+    "type": "prompt",
+    "prompt": "Q Where are you coming from?",
+    "responses": [
+      {
+        "regex": "new RegExp(\"\\b(?:I'm from|I am from|from | I live at |  I live in)\\s+([a-zA-Z]+(?:\\s[a-zA-Z]+)*)\", 'i')",
+        "extract": "match[1]",
+        "saveAs": "app_loc",
+        "next": "change_app_1"
+      }
+    ]
+  },
+  {
+    "id": "change_app_1",
+    "type": "prompt",
+    "prompt": "Q: Do you want to make other changes?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "confirm_app_travel"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "get_app_match"
+      }
+    ]
+  },
+  {
+    "id": "confirm_app_travel",
+    "type": "prompt",
+    "prompt": "Q: Next we that you are willing to travel {app_travel_time}, do you want to change it?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "change_app_travel"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "change_app_2"
+      }
+    ]
+  },
+  {
+    "id": "change_app_travel",
+    "type": "prompt",
+    "prompt": "Q How many miles are you willing to travel",
+    "responses": [
+      {
+        "regex": "new RegExp(\"(\\d+(?:\\.\\d+)?)\\s*(?:-\\s*(\\d+(?:\\.\\d+)?))?\\s*(?:miles?|mi)\\b\", \"i\")",
+        "extract": "match[0]",
+        "saveAs": "app_travel",
+        "next": "change_app_2"
+      }
+    ]
+  },
+  {
+    "id": "change_app_2",
+    "type": "prompt",
+    "prompt": "Q: Do you want to make other changes?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "confirm_app_pay"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "get_app_match"
+      }
+    ]
+  },
+  {
+    "id": "confirm_app_pay",
+    "type": "prompt",
+    "prompt": "Q: You wanted at least {app_pay}, do you want to change it?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "change_app_pay"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "change_app_3"
+      }
+    ]
+  },
+  {
+    "id": "change_app_pay",
+    "type": "prompt",
+    "prompt": "Q: How much do you want to make per week?",
+    "responses": [
+      {
+        "regex": "new RegExp(\"\\$?(\\d{1,3}(?:,?\\d{3})*(?:\\.\\d{2})?)\")",
+        "extract": "match[0]",
+        "saveAs": "app_pay",
+        "next": "change_app_3"
+      }
+    ]
+  },
+  {
+    "id": "change_app_3",
+    "type": "prompt",
+    "prompt": "Q: Do you want to make other changes?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "confirm_app_workday"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "get_app_match"
+      }
+    ]
+  },
+  {
+    "id": "confirm_app_workday",
+    "type": "prompt",
+    "prompt": "Q: We have that you can work {app_workday}, do you want to change it?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "change_app_workday"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "change_app_4"
+      }
+    ]
+  },
+  {
+    "id": "change_app_workday",
+    "type": "prompt",
+    "prompt": "Q: What days of the week are you available?",
+    "responses": [
+      {
+        "regex": "const regex = new RegExp(\"\\b(Mondays?|Tuesdays?|Wednesdays?|Thursdays?|Fridays?|Saturdays?|Sundays?)\\b(?:\\s*(?:to|through|-)\\s*\\b(Mondays?|Tuesdays?|Wednesdays?|Thursdays?|Fridays?|Saturdays?|Sundays?)\\b)?\", \"gi\")",
+        "extract": "match",
+        "saveAs": "app_workday",
+        "next": "change_app_4"
+      }
+    ]
+  },
+  {
+    "id": "change_app_4",
+    "type": "prompt",
+    "prompt": "Q: Do you want to make other changes?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "confirm_app_skills"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "get_app_match"
+      }
+    ]
+  },
+  {
+    "id": "confirm_app_skills",
+    "type": "prompt",
+    "prompt": "Q: We have your experience as the following {app_skills}, do you want to change it?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "change_app_skills"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "change_app_5"
+      }
+    ]
+  },
+  {
+    "id": "change_app_skills",
+    "type": "prompt",
+    "prompt": "Q: What experience do you have?",
+    "responses": [
+      {
+        "regex": "const regex = /(?:(\\d+\\+?\\s*(?:years|months))\\s+of\\s+experience\\s+(?:in|with)\\s+([\\w\\s\\/&-]+))|(?:experience\\s+(?:in|with)\\s+([\\w\\s\\/&-]+))|(?:worked\\s+(?:in|on|with)\\s+([\\w\\s\\/&-]+))|(?:skills?\\s+in\\s+([\\w\\s\\/&-]+))/gi;",
+        "extract": "match",
+        "saveAs": "app_skills",
+        "next": "change_app_5"
+      }
+    ]
+  },
+  {
+    "id": "change_app_5",
+    "type": "prompt",
+    "prompt": "Q: Do you want to make other changes?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "confirm_app_prime_phone"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "get_app_match"
+      }
+    ]
+  },
+  {
+    "id": "confirm_app_prime_phone",
+    "type": "prompt",
+    "prompt": "Q: We have your primary number as {app_prime_phone}, do you want to change it?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "change_app_prime_phone"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "change_app_6"
+      }
+    ]
+  },
+  {
+    "id": "change_app_prime_phone",
+    "type": "prompt",
+    "prompt": "Q: What is your new primary number?",
+    "responses": [
+      {
+        "regex": "new RegExp(['(?:\\+?1\\s*[-.]?)?', '\\(?\\d{3}\\)?', '[\\s.-]?', '\\d{3}',  '[\\s.-]?', '\\d{4}'].join(''), 'g')",
+        "extract": "match",
+        "saveAs": "app_prime_phone",
+        "next": "change_app_6"
+      }
+    ]
+  },
+  {
+    "id": "change_app_6",
+    "type": "prompt",
+    "prompt": "Q: Do you want to make other changes?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "confirm_app_sec_phone"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "get_app_match"
+      }
+    ]
+  },
+  {
+    "id": "confirm_app_sec_phone",
+    "type": "prompt",
+    "prompt": "Q: We have your alternate number as {app_sec_phone}, do you want to change it?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "change_app_sec_phone"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "get_app_match"
+      }
+    ]
+  },
+  {
+    "id": "change_app_sec_phone",
+    "type": "prompt",
+    "prompt": "Q: What is your new alternate number?",
+    "responses": [
+      {
+        "regex": "new RegExp(['(?:\\+?1\\s*[-.]?)?', '\\(?\\d{3}\\)?', '[\\s.-]?', '\\d{3}',  '[\\s.-]?', '\\d{4}'].join(''), 'g')",
+        "extract": "match",
+        "saveAs": "app_sec_phone",
+        "next": "get_app_match"
+      }
+    ]
+  },
+  {
+    "id": "new_app",
+    "type": "prompt",
+    "prompt": "Q What is your name?",
+    "responses": [
+      {
+        "regex": "new RegExp(\"(?:my name(?:'s| is)?|i(?:'m| am)|call me|you can call me)\\s*[:,-]?\\s*([A-Za-z][A-Za-z'-]*)\", 'i')",
+        "extract": "match[1]",
+        "saveAs": "app_name",
+        "next": "new_app_loc"
+      },
+      {
+        "regex": "new RegExp(\"^\\\\s*(?!yes\\\\b|no\\\\b|y\\\\b|n\\\\b|yeah\\\\b|nah\\\\b)([A-Za-z][A-Za-z'-]*(?:\\\\s+[A-Za-z][A-Za-z'-]*){0,3})\\\\s*$\", 'i')",
+        "extract": "match[1]",
+        "saveAs": "app_name",
+        "next": "new_app_loc"
+      }
+    ]
+  },
+  {
+    "id": "new_app_loc",
+    "type": "prompt",
+    "prompt": "Q Where are you coming from?",
+    "responses": [
+      {
+        "regex": "new RegExp(\"\\b(?:I'm from|I am from|from | I live at |  I live in)\\s+([a-zA-Z]+(?:\\s[a-zA-Z]+)*)\", 'i')",
+        "extract": "match[1]",
+        "saveAs": "app_loc",
+        "next": "new_app_travel"
+      }
+    ]
+  },
+  {
+    "id": "new_app_travel",
+    "type": "prompt",
+    "prompt": "Q How many miles are you willing to travel",
+    "responses": [
+      {
+        "regex": "new RegExp(\"(\\d+(?:\\.\\d+)?)\\s*(?:-\\s*(\\d+(?:\\.\\d+)?))?\\s*(?:miles?|mi)\\b\", 'i')",
+        "extract": "match[0]",
+        "saveAs": "app_travel",
+        "next": "new_app_pay"
+      }
+    ]
+  },
+  {
+    "id": "new_app_pay",
+    "type": "prompt",
+    "prompt": "Q: How much do you want to make per week?",
+    "responses": [
+      {
+        "regex": "new RegExp(\"\\$?(\\d{1,3}(?:,?\\d{3})*(?:\\.\\d{2})?)\")",
+        "extract": "match[0]",
+        "saveAs": "app_pay",
+        "next": "new_app_workday"
+      }
+    ]
+  },
+  {
+    "id": "new_app_workday",
+    "type": "prompt",
+    "prompt": "Q: What days of the week are you available?",
+    "responses": [
+      {
+        "regex": "const regex = new RegExp(\"\\b(Mondays?|Tuesdays?|Wednesdays?|Thursdays?|Fridays?|Saturdays?|Sundays?)\\b(?:\\s*(?:to|through|-)\\s*\\b(Mondays?|Tuesdays?|Wednesdays?|Thursdays?|Fridays?|Saturdays?|Sundays?)\\b)?\", \"gi\")",
+        "extract": "match",
+        "saveAs": "app_workday",
+        "next": "new_app_skills"
+      }
+    ]
+  },
+  {
+    "id": "new_app_skills",
+    "type": "prompt",
+    "prompt": "Q: What experience do you have?",
+    "responses": [
+      {
+        "regex": "const regex = /(?:(\\d+\\+?\\s*(?:years|months))\\s+of\\s+experience\\s+(?:in|with)\\s+([\\w\\s\\/&-]+))|(?:experience\\s+(?:in|with)\\s+([\\w\\s\\/&-]+))|(?:worked\\s+(?:in|on|with)\\s+([\\w\\s\\/&-]+))|(?:skills?\\s+in\\s+([\\w\\s\\/&-]+))/gi;",
+        "extract": "match",
+        "saveAs": "app_skills",
+        "next": "confirm_new_app_sec_phone"
+      }
+    ]
+  },
+  {
+    "id": "confirm_new_app_sec_phone",
+    "type": "prompt",
+    "prompt": "Q: Do you want to add another number where we can contact you?",
+    "responses": [
+      {
+        "regex": "new RegExp('\\b(yes|y|aye|yeah)\\b', 'i')",
+        "next": "add_app_sec_phone"
+      },
+      {
+        "regex": "new RegExp('\\b(no|nah|n|nay)\\b', 'i')",
+        "next": "get_app_match"
+      }
+    ]
+  },
+  {
+    "id": "add_app_sec_phone",
+    "type": "prompt",
+    "prompt": "Q: What is your new alternate number?",
+    "responses": [
+      {
+        "regex": "new RegExp(['(?:\\+?1\\s*[-.]?)?', '\\(?\\d{3}\\)?', '[\\s.-]?', '\\d{3}',  '[\\s.-]?', '\\d{4}'].join(''), 'g')",
+        "extract": "match",
+        "saveAs": "app_sec_phone",
+        "next": "get_app_match"
+      }
+    ]
+  }
+]

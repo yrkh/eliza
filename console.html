@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ELIZA Console</title>
+  <style>
+    html, body, #root { height: 100%; margin: 0; }
+    body { background: #0d1117; color: #c9d1d9; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .wrap { height: 100%; display: flex; flex-direction: column; }
+    .nav { background: #161b22; border-bottom: 1px solid #30363d; padding: 10px 14px; font-weight: 600; }
+    .logs { flex: 1; overflow-y: auto; padding: 10px 14px; }
+    .row { padding: 6px 0; border-bottom: 1px dashed #30363d; }
+    .meta { color: #8b949e; font-size: 12px; margin-bottom: 4px; }
+    .type { color: #79c0ff; }
+    .from { color: #ffa657; }
+    .time { color: #a5d6ff; }
+    pre { margin: 0; white-space: pre-wrap; word-break: break-word; }
+    .status { padding: 6px 14px; border-top: 1px solid #30363d; background: #0d1117; color: #8b949e; font-size: 12px; }
+    .pill { display: inline-block; padding: 2px 6px; border-radius: 10px; background: #21262d; color: #c9d1d9; margin-left: 8px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useEffect, useRef, useState } = React;
+
+    function useBroadcastLogs(channelName) {
+      const [logs, setLogs] = useState([]);
+      const ref = useRef(null);
+
+      useEffect(() => {
+        if (!('BroadcastChannel' in window)) {
+          console.warn('BroadcastChannel not supported in this browser');
+          return;
+        }
+        const ch = new BroadcastChannel(channelName);
+        ref.current = ch;
+        const onMsg = (ev) => setLogs(prev => [...prev, ev.data]);
+        ch.addEventListener('message', onMsg);
+        return () => { ch.removeEventListener('message', onMsg); ch.close(); };
+      }, [channelName]);
+
+      return logs;
+    }
+
+    function formatTime(ts) {
+      const d = new Date(ts);
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    function App() {
+      const logs = useBroadcastLogs('eliza-logs');
+      const listRef = useRef(null);
+
+      useEffect(() => {
+        const el = listRef.current;
+        if (el) el.scrollTop = el.scrollHeight;
+      }, [logs.length]);
+
+      return (
+        <div className="wrap">
+          <div className="nav">ELIZA Console <span className="pill">read-only</span></div>
+          <div className="logs" ref={listRef}>
+            {logs.map((log, idx) => (
+              <div key={idx} className="row">
+                <div className="meta">
+                  <span className="time">{formatTime(log.ts)}</span>
+                  {' '}·{' '}
+                  <span className="from">{log.from}</span>
+                  {' '}·{' '}
+                  <span className="type">{log.type}</span>
+                </div>
+                <pre>{JSON.stringify(log.data, null, 2)}</pre>
+              </div>
+            ))}
+            {logs.length === 0 && (
+              <div className="row">
+                <div className="meta">Waiting for events on channel "eliza-logs"…</div>
+                <pre>Open index.html and send a message to see events here.</pre>
+              </div>
+            )}
+          </div>
+          <div className="status">
+            Channel: eliza-logs · Events: {logs.length}
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
