@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>State Flow (Live Terminal)</title>
+  <style>
+    :root {
+      --bg: #0b0c10;
+      --bg-panel: #0f1115;
+      --fg: #d4d4d4;
+      --fg-accent: #00d46a;
+      --border: #2a2f3a;
+      --btn-bg: #1b1f2a;
+      --btn-fg: #e5e7eb;
+    }
+    html, body, #root { height: 100%; margin: 0; padding: 0; background: var(--bg); color: var(--fg); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .wrap { width: min(900px, 100%); height: 100%; margin: 0 auto; display: flex; flex-direction: column; }
+    .nav { height: 52px; display:flex; align-items:center; justify-content: space-between; padding: 0 12px; border-bottom: 1px solid var(--border); background: var(--bg-panel); position: sticky; top: 0; z-index: 2; }
+    .nav .title { font-weight: 600; color: var(--fg-accent); letter-spacing: 0.3px; }
+    .nav a { color: #6cb6ff; text-decoration: none; }
+    .panel { flex: 1; display: flex; min-height: 0; }
+    .terminal { flex: 1; background: #000; color: var(--fg-accent); padding: 14px; overflow: auto; white-space: pre-wrap; line-height: 1.45; }
+    .sidebar { width: 280px; border-left: 1px solid var(--border); background: var(--bg-panel); padding: 10px; box-sizing: border-box; display:flex; flex-direction: column; gap: 8px; }
+    .sidebar h3 { margin: 4px 0 6px; font-size: 14px; color: #9aa4b2; font-weight: 600; }
+    .sidebar button { padding: 8px 10px; background: var(--btn-bg); color: var(--btn-fg); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; text-align: left; font-family: inherit; }
+    .sidebar button:hover { background: #232938; }
+    .footer { height: 32px; border-top: 1px solid var(--border); background: var(--bg-panel); display:flex; align-items:center; gap: 10px; padding: 0 10px; font-size: 12px; color: #9aa4b2; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useEffect, useRef, useState } = React;
+
+    function useAutoScroll(dep) {
+      const ref = useRef(null);
+      useEffect(() => { const el = ref.current; if (el) el.scrollTop = el.scrollHeight; }, [dep]);
+      return ref;
+    }
+
+    function App() {
+      const [logs, setLogs] = useState([]);
+      const termRef = useAutoScroll(logs.length);
+
+      useEffect(() => {
+        let bc = null;
+        try {
+          if ('BroadcastChannel' in window) {
+            bc = new BroadcastChannel('stateflow-events');
+            bc.onmessage = (ev) => {
+              const msg = ev && ev.data ? ev.data : null;
+              if (!msg || msg.type !== 'transition') return;
+              const { m_resultId, m_action, m_next, m_postProcess } = msg;
+              const parts = [
+                `m_resultId: ${JSON.stringify(m_resultId)}`,
+                `m_action: ${JSON.stringify(m_action)}`,
+                `m_next: ${JSON.stringify(m_next)}`
+              ];
+              if (Object.prototype.hasOwnProperty.call(msg, 'm_postProcess')) {
+                parts.push(`m_postProcess: ${JSON.stringify(m_postProcess)}`);
+              }
+              const line = `{ ${parts.join(', ')} }`;
+              setLogs(prev => [...prev, line]);
+            };
+          }
+        } catch (_) { /* ignore */ }
+        return () => { try { if (bc) bc.close(); } catch (_) {} };
+      }, []);
+
+      const clear = () => setLogs([]);
+
+      return (
+        <div className="wrap">
+          <div className="nav">
+            <div className="title">State Flow — Live Terminal</div>
+            <div>
+              <a href="state_flow.html" title="iMessage view">iMessage view</a>
+            </div>
+          </div>
+          <div className="panel">
+            <pre ref={termRef} className="terminal">{logs.join('\n\n')}</pre>
+            <div className="sidebar">
+              <h3>Controls</h3>
+              <button onClick={clear}>Clear Logs</button>
+              <div style={{fontSize:12,color:'#9aa4b2'}}>
+                Open state_flow.html in another tab/window and click transitions.
+                Logs will appear here in real time.
+              </div>
+            </div>
+          </div>
+          <div className="footer">
+            <span>Entries are enclosed in curly braces and separated by two line breaks.</span>
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

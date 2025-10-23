@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>State Flow (iMessage)</title>
+  <style>
+    :root {
+      --bg: #e9edf3;
+      --imessage-bg: #f1f2f6;
+      --bubble-user: #0b93f6;
+      --bubble-bot: #e5e5ea;
+      --text-dark: #111;
+      --text-light: #fff;
+      --input-bg: #fff;
+      --border: #d0d7e2;
+    }
+    html, body, #root { height: 100%; margin: 0; padding: 0; background: var(--bg); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    .phone { width: min(420px, 100%); height: 100%; margin: 0 auto; display: flex; flex-direction: column; background: var(--imessage-bg); }
+    .nav { height: 56px; display:flex; align-items:center; justify-content:center; border-bottom:1px solid var(--border); background:#fff; font-weight:600; position: sticky; top: 0; z-index: 2; }
+    .messages { flex: 1; overflow-y: auto; padding: 12px 12px 100px; display:flex; flex-direction:column; gap:8px; }
+    .row { display:flex; width:100%; }
+    .row.bot { justify-content:flex-start; }
+    .row.user { justify-content:flex-end; }
+    .bubble { max-width:70%; padding:8px 12px; border-radius:18px; font-size:15px; line-height:1.3; word-wrap:break-word; position:relative; white-space:pre-wrap; }
+    .bot .bubble { background: var(--bubble-bot); color:#000; border-top-left-radius:6px; }
+    .user .bubble { background: var(--bubble-user); color: var(--text-light); border-top-right-radius:6px; }
+    .actions { position: fixed; left: 50%; transform: translateX(-50%); bottom: 0; width: min(420px, 100%); background: var(--input-bg); border-top:1px solid var(--border); padding: 10px; box-sizing: border-box; display:flex; flex-wrap: wrap; gap:8px; }
+    .actions button { padding: 10px 12px; border-radius: 16px; border: 1px solid var(--border); background: #fff; cursor: pointer; }
+    .actions .meta { flex-basis: 100%; color: #666; font-size: 12px; margin-top: 2px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- Inline flow data to avoid CORS issues when opening via file:// -->
+  <script id="jf-talk" type="application/json">[
+  {
+    "m_stateId": "W",
+    "m_question": "WQ?",
+    "m_transitions": {
+      "ww1": {
+        "m_resultId": "W.R.1",
+        "m_action": "sineTaylor",
+        "m_args": [31],
+        "m_next": "W"
+      },
+      "ww2": {
+        "m_resultId": "W.R.2",
+        "m_action": "print",
+        "m_args": ["Trigger incoming"],
+        "m_next": "A"
+      }
+    }
+  },
+  {
+    "m_stateId": "A",
+    "m_question": "AQ AQ?",
+    "m_transitions": {
+      "aa1": {
+        "m_resultId": "A.R.1",
+        "m_action": "randomChoice",
+        "m_args": [1, 2.5, 3, 4, 5, 7, 10, "Mary", "Had", "London", "Bridge"],
+        "m_next": "E"
+      },
+      "aa2": {
+        "m_resultId": "A.R.2",
+        "m_action": "print",
+        "m_args": ["aa2"],
+        "m_next": "B"
+      },
+      "aa3": {
+        "m_resultId": "A.R.3",
+        "m_action": "average",
+        "m_args": [3, 15, 15, 4, 3, 18, 5],
+        "m_next": "B"
+      }
+    }
+  },
+  {
+    "m_stateId": "B",
+    "m_question": "BQBQBQ?",
+    "m_transitions": {
+      "bb1": {
+        "m_resultId": "B.R.1",
+        "m_action": "harmonicMean",
+        "m_args": [6, 19, 8, 8, 20, 3, 5],
+        "m_next": "C",
+        "m_postProcess": "multiplyBy2"
+      },
+      "bb2": {
+        "m_resultId": "B.R.2",
+        "m_action": "geometricMean",
+        "m_args": [5, 3, 12, 20, 11, 6, 8, 15, 15],
+        "m_next": "D",
+        "m_prefix": "Geo Mean "
+      }
+    }
+  },
+  {
+    "m_stateId": "C",
+    "m_question": "CCQCCQCCQCCQCCQ ?",
+    "m_transitions": {
+      "cc1": {
+        "m_resultId": "C.R.1",
+        "m_action": "contraHarmonicMean",
+        "m_args": [13, 15, 4, 1, 7, 20, 7, 8, 19, 3, 15, 2, 20, 8, 1, 18, 19, 10],
+        "m_next": "F"
+      },
+      "cc2": {
+        "m_resultId": "C.R.2",
+        "m_action": "print",
+        "m_args": ["cc2"],
+        "m_next": "D"
+      }
+    }
+  },
+  {
+    "m_stateId": "D",
+    "m_question": "DDDQ DDDQ DDDQ DDDQ DDDQ?",
+    "m_transitions": {
+      "dd1": {
+        "m_resultId": "D.R.1",
+        "m_action": "variance",
+        "m_args": [13, 15, 4, 1, 7, 20, 7, 8, 19, 3, 15, 2, 20, 8, 1, 18, 19, 10],
+        "m_next": "W",
+        "m_prefix": "Var of "
+      },
+      "dd2": {
+        "m_resultId": "D.R.2",
+        "m_action": "print",
+        "m_args": ["dd2"],
+        "m_next": "A"
+      },
+      "dd3": {
+        "m_resultId": "D.R.3",
+        "m_action": "standardDeviation",
+        "m_args": [13, 15, 4, 1, 7, 20, 7, 8, 19, 3, 15, 2, 20, 8, 1, 18, 19, 10],
+        "m_next": "B",
+        "m_prefix": "STD of "
+      },
+      "dd4": {
+        "m_resultId": "D.R.4",
+        "m_action": "sineTaylor",
+        "m_args": [37],
+        "m_next": "C"
+      }
+    }
+  },
+  {
+    "m_stateId": "E",
+    "m_question": "EQEQEQEQ EQEQEQEQ EQEQEQEQ ?",
+    "m_transitions": {
+      "ee1": {
+        "m_resultId": "E.R.1",
+        "m_action": "randomChoice",
+        "m_args": [10, 15, 7, 19, 20, 11, 4, 11, 10],
+        "m_next": "B"
+      },
+      "ee2": {
+        "m_resultId": "E.R.2",
+        "m_action": "harmonicMean",
+        "m_args": [13, 15, 4, 1, 7, 20, 7, 8, 19, 3, 19, 20, 11, 4, 11, 10],
+        "m_next": "W",
+        "m_postProcess": "multiplyBy2"
+      }
+    }
+  },
+  {
+    "m_stateId": "F",
+    "m_question": "FFQ FFQ FFQ FFQ FFQ ?",
+    "m_transitions": {
+      "ff1": {
+        "m_resultId": "F.R.1",
+        "m_action": "print",
+        "m_args": ["ff1"],
+        "m_next": "C"
+      },
+      "ff2": {
+        "m_resultId": "F.R.2",
+        "m_action": "print",
+        "m_args": ["ff2"],
+        "m_next": "D"
+      },
+      "ff3": {
+        "m_resultId": "F.R.3",
+        "m_action": "geometricMean",
+        "m_args": [5, 3, 12, 20, 13, 15, 4, 1, 7, 20, 7, 8, 19, 3, 15, 2, 20, 8, 1, 18, 19, 10, 11, 6, 8, 15, 15],
+        "m_next": "A",
+        "m_prefix": "Geo Mean "
+      }
+    }
+  }
+]</script>
+
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useEffect, useMemo, useState, useRef } = React;
+    // Broadcast channel to stream interactions to live terminal view
+    const __sf_bc = (typeof window !== 'undefined' && 'BroadcastChannel' in window)
+      ? new BroadcastChannel('stateflow-events')
+      : null;
+    function emitTransitionLog(payload) {
+      try {
+        if (__sf_bc) {
+          __sf_bc.postMessage({ type: 'transition', ts: Date.now(), from: 'state_flow.html', ...payload });
+        }
+      } catch (_) { /* ignore */ }
+    }
+
+    function useAutoScroll(dep) {
+      const ref = useRef(null);
+      useEffect(() => {
+        const el = ref.current; if (el) el.scrollTop = el.scrollHeight;
+      }, [dep]);
+      return ref;
+    }
+
+    function App() {
+      const [states, setStates] = useState(null);
+      const [current, setCurrent] = useState('W');
+      const [messages, setMessages] = useState([]);
+      const scrollRef = useAutoScroll(messages.length);
+
+      useEffect(() => {
+        try {
+          const el = document.getElementById('jf-talk');
+          if (el && el.textContent) {
+            const data = JSON.parse(el.textContent);
+            setStates(data);
+          } else {
+            console.error('States JSON not found in the page');
+          }
+        } catch (err) {
+          console.error('Failed to load states:', err);
+        }
+      }, []);
+
+      const stateMap = useMemo(() => {
+        if (!states) return {};
+        const m = {};
+        for (const s of states) m[s.m_stateId] = s;
+        return m;
+      }, [states]);
+
+      // When states first load, push the initial question
+      useEffect(() => {
+        if (!states) return;
+        const s = stateMap[current];
+        if (!s) return;
+        setMessages([{ who: 'bot', text: s.m_question, id: 1 }]);
+      }, [states]);
+
+      const transitions = useMemo(() => {
+        const s = stateMap[current];
+        if (!s) return [];
+        return Object.entries(s.m_transitions || {}).map(([key, t]) => ({ key, ...t }));
+      }, [stateMap, current]);
+
+      const onChoose = (t) => {
+        // Emit to live terminal view
+        emitTransitionLog({
+          state: current,
+          key: t.key,
+          m_resultId: t.m_resultId,
+          m_action: t.m_action,
+          m_next: t.m_next,
+          ...(Object.prototype.hasOwnProperty.call(t, 'm_postProcess') ? { m_postProcess: t.m_postProcess } : {})
+        });
+        // Add user bubble with m_resultId only
+        setMessages(prev => [...prev, { who: 'user', text: t.m_resultId, id: Date.now() }]);
+        const nextState = t.m_next;
+        const next = stateMap[nextState];
+        if (next) {
+          // Add next question as bot bubble
+          setMessages(prev => [...prev, { who: 'bot', text: next.m_question, id: Date.now()+1 }]);
+          setCurrent(nextState);
+        } else {
+          // End of flow or missing; just update state
+          setCurrent(nextState || current);
+        }
+      };
+
+      if (!states) {
+        return (
+          <div className="phone">
+            <div className="nav">State Flow</div>
+            <div className="messages" ref={scrollRef}>
+              <div className="row bot"><div className="bubble">Loading flow…</div></div>
+            </div>
+            <div className="actions"><span className="meta">Loading…</span></div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="phone">
+          <div className="nav">State Flow &nbsp;|&nbsp; <a href="state_flow_terminal.html" style={{fontWeight:400, fontSize:14}}>Terminal</a> &nbsp;|&nbsp; <a href="state_flow_terminal_live.html" style={{fontWeight:400, fontSize:14}}>Live Terminal</a></div>
+          <div className="messages" ref={scrollRef}>
+            {messages.map((m, i) => (
+              <div key={i} className={`row ${m.who}`}>
+                <div className="bubble">{m.text}</div>
+              </div>
+            ))}
+          </div>
+          <div className="actions">
+            {transitions.map(t => (
+              <button key={t.key} onClick={() => onChoose(t)} title={`Go to ${t.m_next}`}>{t.key}</button>
+            ))}
+            <span className="meta">Current state: {current}</span>
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
