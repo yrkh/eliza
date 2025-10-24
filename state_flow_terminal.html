@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>State Flow (Terminal)</title>
+  <style>
+    :root {
+      --bg: #0b0c10;         /* dark terminal bg */
+      --bg-panel: #0f1115;   /* panel bg */
+      --fg: #d4d4d4;         /* light gray text */
+      --fg-accent: #00d46a;  /* green accent like terminal */
+      --border: #2a2f3a;
+      --btn-bg: #1b1f2a;
+      --btn-fg: #e5e7eb;
+    }
+    html, body, #root { height: 100%; margin: 0; padding: 0; background: var(--bg); color: var(--fg); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .wrap { width: min(900px, 100%); height: 100%; margin: 0 auto; display: flex; flex-direction: column; }
+    .nav { height: 52px; display:flex; align-items:center; justify-content: space-between; padding: 0 12px; border-bottom: 1px solid var(--border); background: var(--bg-panel); position: sticky; top: 0; z-index: 2; }
+    .nav .title { font-weight: 600; color: var(--fg-accent); letter-spacing: 0.3px; }
+    .nav a { color: #6cb6ff; text-decoration: none; }
+    .panel { flex: 1; display: flex; min-height: 0; }
+    .terminal { flex: 1; background: #000; color: var(--fg-accent); padding: 14px; overflow: auto; white-space: pre-wrap; line-height: 1.45; }
+    .sidebar { width: 320px; border-left: 1px solid var(--border); background: var(--bg-panel); padding: 10px; box-sizing: border-box; display:flex; flex-direction: column; gap: 8px; }
+    .sidebar h3 { margin: 4px 0 6px; font-size: 14px; color: #9aa4b2; font-weight: 600; }
+    .sidebar .state { font-size: 13px; color: var(--fg-accent); margin-bottom: 6px; }
+    .sidebar button { padding: 8px 10px; background: var(--btn-bg); color: var(--btn-fg); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; text-align: left; font-family: inherit; }
+    .sidebar button:hover { background: #232938; }
+    .sidebar .key { color: #9aa4b2; }
+    .footer { height: 32px; border-top: 1px solid var(--border); background: var(--bg-panel); display:flex; align-items:center; gap: 10px; padding: 0 10px; font-size: 12px; color: #9aa4b2; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- Inline flow data to avoid CORS issues when opening via file:// -->
+  <script id="jf-talk" type="application/json">[
+  {
+    "m_stateId": "W",
+    "m_question": "WQ?",
+    "m_transitions": {
+      "ww1": {
+        "m_resultId": "W.R.1",
+        "m_action": "sineTaylor",
+        "m_args": [31],
+        "m_next": "W"
+      },
+      "ww2": {
+        "m_resultId": "W.R.2",
+        "m_action": "print",
+        "m_args": ["Trigger incoming"],
+        "m_next": "A"
+      }
+    }
+  },
+  {
+    "m_stateId": "A",
+    "m_question": "AQ AQ?",
+    "m_transitions": {
+      "aa1": {
+        "m_resultId": "A.R.1",
+        "m_action": "randomChoice",
+        "m_args": [1, 2.5, 3, 4, 5, 7, 10, "Mary", "Had", "London", "Bridge"],
+        "m_next": "E"
+      },
+      "aa2": {
+        "m_resultId": "A.R.2",
+        "m_action": "print",
+        "m_args": ["aa2"],
+        "m_next": "B"
+      },
+      "aa3": {
+        "m_resultId": "A.R.3",
+        "m_action": "average",
+        "m_args": [3, 15, 15, 4, 3, 18, 5],
+        "m_next": "B"
+      }
+    }
+  },
+  {
+    "m_stateId": "B",
+    "m_question": "BQBQBQ?",
+    "m_transitions": {
+      "bb1": {
+        "m_resultId": "B.R.1",
+        "m_action": "harmonicMean",
+        "m_args": [6, 19, 8, 8, 20, 3, 5],
+        "m_next": "C",
+        "m_postProcess": "multiplyBy2"
+      },
+      "bb2": {
+        "m_resultId": "B.R.2",
+        "m_action": "geometricMean",
+        "m_args": [5, 3, 12, 20, 11, 6, 8, 15, 15],
+        "m_next": "D",
+        "m_prefix": "Geo Mean "
+      }
+    }
+  },
+  {
+    "m_stateId": "C",
+    "m_question": "CCQCCQCCQCCQCCQ ?",
+    "m_transitions": {
+      "cc1": {
+        "m_resultId": "C.R.1",
+        "m_action": "contraHarmonicMean",
+        "m_args": [13, 15, 4, 1, 7, 20, 7, 8, 19, 3, 15, 2, 20, 8, 1, 18, 19, 10],
+        "m_next": "F"
+      },
+      "cc2": {
+        "m_resultId": "C.R.2",
+        "m_action": "print",
+        "m_args": ["cc2"],
+        "m_next": "D"
+      }
+    }
+  },
+  {
+    "m_stateId": "D",
+    "m_question": "DDDQ DDDQ DDDQ DDDQ DDDQ?",
+    "m_transitions": {
+      "dd1": {
+        "m_resultId": "D.R.1",
+        "m_action": "variance",
+        "m_args": [13, 15, 4, 1, 7, 20, 7, 8, 19, 3, 15, 2, 20, 8, 1, 18, 19, 10],
+        "m_next": "W",
+        "m_prefix": "Var of "
+      },
+      "dd2": {
+        "m_resultId": "D.R.2",
+        "m_action": "print",
+        "m_args": ["dd2"],
+        "m_next": "A"
+      },
+      "dd3": {
+        "m_resultId": "D.R.3",
+        "m_action": "standardDeviation",
+        "m_args": [13, 15, 4, 1, 7, 20, 7, 8, 19, 3, 15, 2, 20, 8, 1, 18, 19, 10],
+        "m_next": "B",
+        "m_prefix": "STD of "
+      },
+      "dd4": {
+        "m_resultId": "D.R.4",
+        "m_action": "sineTaylor",
+        "m_args": [37],
+        "m_next": "C"
+      }
+    }
+  },
+  {
+    "m_stateId": "E",
+    "m_question": "EQEQEQEQ EQEQEQEQ EQEQEQEQ ?",
+    "m_transitions": {
+      "ee1": {
+        "m_resultId": "E.R.1",
+        "m_action": "randomChoice",
+        "m_args": [10, 15, 7, 19, 20, 11, 4, 11, 10],
+        "m_next": "B"
+      },
+      "ee2": {
+        "m_resultId": "E.R.2",
+        "m_action": "harmonicMean",
+        "m_args": [13, 15, 4, 1, 7, 20, 7, 8, 19, 3, 19, 20, 11, 4, 11, 10],
+        "m_next": "W",
+        "m_postProcess": "multiplyBy2"
+      }
+    }
+  },
+  {
+    "m_stateId": "F",
+    "m_question": "FFQ FFQ FFQ FFQ FFQ ?",
+    "m_transitions": {
+      "ff1": {
+        "m_resultId": "F.R.1",
+        "m_action": "print",
+        "m_args": ["ff1"],
+        "m_next": "C"
+      },
+      "ff2": {
+        "m_resultId": "F.R.2",
+        "m_action": "print",
+        "m_args": ["ff2"],
+        "m_next": "D"
+      },
+      "ff3": {
+        "m_resultId": "F.R.3",
+        "m_action": "geometricMean",
+        "m_args": [5, 3, 12, 20, 13, 15, 4, 1, 7, 20, 7, 8, 19, 3, 15, 2, 20, 8, 1, 18, 19, 10, 11, 6, 8, 15, 15],
+        "m_next": "A",
+        "m_prefix": "Geo Mean "
+      }
+    }
+  }
+]</script>
+
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useEffect, useMemo, useState, useRef } = React;
+
+    function useAutoScroll(dep) {
+      const ref = useRef(null);
+      useEffect(() => {
+        const el = ref.current; if (el) el.scrollTop = el.scrollHeight;
+      }, [dep]);
+      return ref;
+    }
+
+    function App() {
+      const [states, setStates] = useState(null);
+      const [current, setCurrent] = useState('W');
+      const [logs, setLogs] = useState([]); // array of strings
+      const termRef = useAutoScroll(logs.length);
+
+      useEffect(() => {
+        try {
+          const el = document.getElementById('jf-talk');
+          if (el && el.textContent) {
+            const data = JSON.parse(el.textContent);
+            setStates(data);
+          } else {
+            console.error('States JSON not found in the page');
+          }
+        } catch (err) {
+          console.error('Failed to load states:', err);
+        }
+      }, []);
+
+      const stateMap = useMemo(() => {
+        if (!states) return {};
+        const m = {};
+        for (const s of states) m[s.m_stateId] = s;
+        return m;
+      }, [states]);
+
+      const transitions = useMemo(() => {
+        const s = stateMap[current];
+        if (!s) return [];
+        return Object.entries(s.m_transitions || {}).map(([key, t]) => ({ key, ...t }));
+      }, [stateMap, current]);
+
+      const formatLog = (t) => {
+        const parts = [
+          `m_resultId: ${JSON.stringify(t.m_resultId)}`,
+          `m_action: ${JSON.stringify(t.m_action)}`,
+          `m_next: ${JSON.stringify(t.m_next)}`
+        ];
+        if (Object.prototype.hasOwnProperty.call(t, 'm_postProcess')) {
+          parts.push(`m_postProcess: ${JSON.stringify(t.m_postProcess)}`);
+        }
+        return `{ ${parts.join(', ')} }`;
+      };
+
+      const onChoose = (t) => {
+        setLogs(prev => [...prev, formatLog(t)]);
+        const nextState = t.m_next;
+        if (stateMap[nextState]) {
+          setCurrent(nextState);
+        } else {
+          setCurrent(nextState || current);
+        }
+      };
+
+      return (
+        <div className="wrap">
+          <div className="nav">
+            <div className="title">State Flow — Terminal</div>
+            <div><a href="state_flow.html" title="iMessage view">iMessage view</a></div>
+          </div>
+          <div className="panel">
+            <pre ref={termRef} className="terminal">{logs.join('\n\n')}</pre>
+            <div className="sidebar">
+              <h3>Transitions</h3>
+              <div className="state">Current: {current || '—'}</div>
+              {transitions.length === 0 && (<div style={{fontSize:12,color:'#9aa4b2'}}>No transitions</div>)}
+              {transitions.map(t => (
+                <button key={t.key} onClick={() => onChoose(t)}>
+                  <span className="key">{t.key}</span> → {t.m_next}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="footer">
+            <span>Click a transition to append a log line. Logs are enclosed in curly braces and separated by two line breaks.</span>
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

@@ -1,7 +1,8 @@
+
 // test_jf_pygmallion.js
 
 const assert = require('assert');
-// const sinon = require('sinon');
+const sinon = require('sinon');
 const {
     x_processInput
 } = require('./jf_pygmallion');
